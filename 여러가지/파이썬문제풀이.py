@@ -25,20 +25,20 @@
 # new_s2 = s[5:-1]
 # print(new_s2 +' '+ new_s1)
 #------------------------------------------------------------------------------
-url = r'C:\myphoto\helloworld.jpg'
-path = "C:\\myphoto\\helloworld.jpg"
-# 마지막 역슬레시의 위치
-p1 = path.rfind("\\")
-# 마지막 점(.)의 위치
-p2 = path.rfind(".")
-# 폴더 위치
-folder = path[:p1]
-print(f"폴더의 위치 :{folder}")
-file = path[p1+1:p2]
-ext = path[p2+1:]
+# url = r'C:\myphoto\helloworld.jpg'
+# path = "C:\\myphoto\\helloworld.jpg"
+# # 마지막 역슬레시의 위치
+# p1 = path.rfind("\\")
+# # 마지막 점(.)의 위치
+# p2 = path.rfind(".")
+# # 폴더 위치
+# folder = path[:p1]
+# print(f"폴더의 위치 :{folder}")
+# file = path[p1+1:p2]
+# ext = path[p2+1:]
 #------------------------------------------------------------------------------
 
-# grade = [82,74,93,65,32,71,90,88,74]
+grade = [82,74,93,65,32,71,90,88,74]
 # w = max(grade)
 # grade.remove(w)
 # w1 = max(grade)
@@ -46,6 +46,22 @@ ext = path[p2+1:]
 # w2 = max(grade)
 # print((w+w1+w2)/3)
     
+math = [82,74,93,65,32,71,90,88,74]
+# math.sort()
+# print(math[-3:])
+# A = math[-3:]
+# sum(A)
+# print(sum(A)/len(A))
+# math.sort(reverse=True)
+# print(math)
+
+# for a in range(0, len(grade)-1):
+#     for b in range(a+1, len(grade)):
+#         if grade[a] > grade[b]:
+#             grade[a],grade[b] = grade[b],grade[a]
+# print(set(grade))
+
+#------------------------------------------------------------------------------
 # my_age = int(input("본인의 나이를 입력해주세요:"))
 # if my_age < 10:
 #     print("어린이입니다.")
@@ -62,6 +78,7 @@ ext = path[p2+1:]
 # else:
 #     print("노년층입니다.")
 
+#------------------------------------------------------------------------------
 # myWeight = int(input("체중을 입력해주세요(kg):"))
 # myHeight = int(input("키를 입력해주세요:"))
 # # 키 150이하면 표준체중 = 신장 -110
@@ -82,6 +99,8 @@ ext = path[p2+1:]
 # else:
 #     print("고도비만(매우위험)")
 
+#------------------------------------------------------------------------------
+
 # 짝수의 합 구하기
 # 조건문을 안쓰고?
 # a = 1
@@ -90,7 +109,7 @@ ext = path[p2+1:]
 # print(a)
 # for a in 100:
 #     if a
-
+#------------------------------------------------------------------------------
 # lista = ["A","A","A",'O','B','B','O','AB','AB','O']
 # dicta = {}
 # # result = {"A": 0}
@@ -98,13 +117,13 @@ ext = path[p2+1:]
 #     if a not in dicta.keys():
 #         dicta[a] = lista.count(a)
 # print(dicta)
-
+#------------------------------------------------------------------------------
 # a = int(input("숫자를 입력해주세요 : "))
 # result = 1
 # for i in range(1, a+1):
 #     result *= i
 # print(result)
-
+#------------------------------------------------------------------------------
 # dice = [1,2,3,4,5,6]
 # result = []
 # for a in range(len(dice)): # a = 1,2,3,4,5,6
@@ -115,7 +134,7 @@ ext = path[p2+1:]
 # print(result)
 # A = result[0:2] 
 # print(A)
-
+#------------------------------------------------------------------------------
 # x = int(input("숫자를 입력하세요 :"))
 # y = int(input("숫자를 입력하세요 :"))
 # num = 0
@@ -123,7 +142,7 @@ ext = path[p2+1:]
 #     if x%a ==0 and y%a ==0:
 #         num += a
 # print(num)
-
+#------------------------------------------------------------------------------
 # 평일에는 시급 9500원, 주말에는 시급 13000원
 # 일주일간 총 급여
 # t1 = 4*9500
@@ -148,6 +167,8 @@ ext = path[p2+1:]
 #     num2 += s[b]*B
 # print(num2)
 # print(num1+num2)
+
+#------------------------------------------------------------------------------
 
 # lista = [291,586,460,558,18,72] # 수량리스트
 # listb = [500,320,100,120,92,30] # 가격리스트

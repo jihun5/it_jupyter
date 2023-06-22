@@ -1,8 +1,8 @@
 # 다음의 주가가 89,000 네이버의 주가가 751,000일 때
 # 다음 주식 100주,네이버 주식 20주를 가지고 있을 떄 
 # 그 사람이 가지고 있는 주식의 총액을 계산하는 프로그램을 작성하시오
-# Daum = 89000
-# Naver = 751000
+Daum = 89000
+Naver = 751000
 # x = int(input("다음은 몇 주를 가지고 있습니까?"))
 # y = int(input("네이버는 몇 주를 가지고 있습니까?"))
 # print(f"다음의 주식의 총액은? :{Daum*x}, 네이버의 주식총액은{Naver*y}")
@@ -20,13 +20,13 @@
 # my_BMI = int(myWeight/(myHeight**2))
 # print(my_BMI)
 #------------------------------------------------------------------------------
-# s = "Daum KaKao"
+s = "Daum KaKao"
 # new_s1 = s[0:4]
 # new_s2 = s[5:-1]
 # print(new_s2 +' '+ new_s1)
 #------------------------------------------------------------------------------
-# url = r'C:\myphoto\helloworld.jpg'
-# path = "C:\\myphoto\\helloworld.jpg"
+## url = r'C:\myphoto\helloworld.jpg'
+path = "C:\\myphoto\\helloworld.jpg"
 # # 마지막 역슬레시의 위치
 # p1 = path.rfind("\\")
 # # 마지막 점(.)의 위치
@@ -65,18 +65,28 @@ math = [82,74,93,65,32,71,90,88,74]
 # my_age = int(input("본인의 나이를 입력해주세요:"))
 # if my_age < 10:
 #     print("어린이입니다.")
-# if my_age < 20:
+# elif my_age < 20:
 #     print("10대입니다.")
-# if my_age < 30:
+# elif my_age < 30:
 #     print("20대입니다.")
-# if my_age < 40:
+# elif my_age < 40:
 #     print("30대입니다.")
-# if my_age < 50:
+# elif my_age < 50:
 #     print("40대입니다.")
-# if my_age < 60:
+# elif my_age < 60:
 #     print("50대입니다.")
 # else:
 #     print("노년층입니다.")
+
+# 프로그램효율을 위해 거짓일 가능성이 높은 것을 and문 앞에 배치
+# 프로그램효율을 위해 참일 가능성이 높은 것을 or문 앞에 배치
+# age = int(input("나이를 입력하세요:"))
+# level = age//10
+# if level == 0:
+#     print("어린이입니다")
+# else:
+#     print(f"당신의 나이는 {level}0대입니다.")
+
 
 #------------------------------------------------------------------------------
 # myWeight = int(input("체중을 입력해주세요(kg):"))
@@ -99,6 +109,7 @@ math = [82,74,93,65,32,71,90,88,74]
 # else:
 #     print("고도비만(매우위험)")
 
+
 #------------------------------------------------------------------------------
 
 # 짝수의 합 구하기
@@ -109,21 +120,63 @@ math = [82,74,93,65,32,71,90,88,74]
 # print(a)
 # for a in 100:
 #     if a
+
+# total = 0
+# for i in range(0, 101, 2):
+#     total += i
+# print(total)
+
+# k =list(range(0,101,2))
+# print(k)
+# num = 0
+# for a in k:
+#     num += a
+# print(num)
+
+# i = 0 # 조건을 판별할 변수를 초기화 -> 초기식
+# total = 0
+# while i < 101: # 조건식
+#     total += i
+#     i += 2 #조건값에 변화를 주기 위한 식
+# print(total)
+
 #------------------------------------------------------------------------------
-# lista = ["A","A","A",'O','B','B','O','AB','AB','O']
+
+# dict1 = {}
+# dict1[1] = 3
+# print(dict1)
+
+lista = ["A","A","A",'O','B','B','O','AB','AB','O']
 # dicta = {}
 # # result = {"A": 0}
 # for a in lista:
 #     if a not in dicta.keys():
 #         dicta[a] = lista.count(a)
 # print(dicta)
+
+# result = {"A":0,"B":0,"AB":0,"O":0}
+# for a in lista:
+#     result[a] += 1
+# print(result)
+
 #------------------------------------------------------------------------------
+
 # a = int(input("숫자를 입력해주세요 : "))
 # result = 1
 # for i in range(1, a+1):
 #     result *= i
-# print(result)
+# print(f"{a}의 팩토리얼은 {result}")
+
+# def facto(n): # n값은 매개변수
+#     if(n > 1):
+#         return n * facto(n - 1)
+#     else:
+#         return 1
+# a = int(input("숫자를 입력하세요 : "))
+# print(facto(a))
+
 #------------------------------------------------------------------------------
+
 # dice = [1,2,3,4,5,6]
 # result = []
 # for a in range(len(dice)): # a = 1,2,3,4,5,6
@@ -134,24 +187,30 @@ math = [82,74,93,65,32,71,90,88,74]
 # print(result)
 # A = result[0:2] 
 # print(A)
+
+# c = 0
+# for i in range(1,7):
+#     for j in range(1,7):
+#         if i + j == 6:
+#             c += 1
+#             print(f"{i},{j}, {c}개")
+    
+
 #------------------------------------------------------------------------------
+
 # x = int(input("숫자를 입력하세요 :"))
 # y = int(input("숫자를 입력하세요 :"))
 # num = 0
-# for a in range(1, 100):
-#     if x%a ==0 and y%a ==0:
+# for a in range(1, 101):
+#     if a%x ==0 and a%y ==0:
 #         num += a
+#         print(a)
 # print(num)
+
 #------------------------------------------------------------------------------
+
 # 평일에는 시급 9500원, 주말에는 시급 13000원
 # 일주일간 총 급여
-# t1 = 4*9500
-# t2 = 3*9500
-# t3 = 3*9500
-# t4 = 4*9500
-# t5 = 5*9500
-# s1 = 7*13000
-# s2 = 6*13000
 # w = [4,3,3,4,5]
 # s = [7,6]
 # A = 9500
@@ -162,15 +221,54 @@ math = [82,74,93,65,32,71,90,88,74]
 # num2 = 0
 # for a in range(len(w)):
 #     num1 += w[a]*A
-# print(num1)
+# print(num1) # 평일 급여
 # for b in range(len(s)):
 #     num2 += s[b]*B
-# print(num2)
-# print(num1+num2)
+# print(num2) # 주말 급여
+# print(num1+num2) # 이번주 급여
+
+# time = [4,3,3,4,5,7,6]
+# pay = 0
+# for i in range(0, len(time)):
+#     if i < 5:
+#         pay += time[i] *9500
+#     else:
+#         pay += time[i] *13000
+# print(pay)
 
 #------------------------------------------------------------------------------
 
 # lista = [291,586,460,558,18,72] # 수량리스트
 # listb = [500,320,100,120,92,30] # 가격리스트
 
-# dict1 = {"수량":lista[0], "단가":listb[1]}
+# ieven = [
+#     {"수량":291, "단가":500},
+#     {"수량":586, "단가":320},
+#     {"수량":460, "단가":100},
+#     {"수량":558, "단가":120},
+#     {"수량":18, "단가":92},
+#     {"수량":72, "단가":30},
+# ]
+# total = 0
+# for item in ieven:
+#     total += item['수량'] * item["단가"] *0.9
+# print(total)
+# # dict1 = {"수량":lista[0], "단가":listb[1]}
+# for i in range(0, len(ieven)-1):
+#     for j in range(i+1, len(ieven)):
+#         if ieven[i]["수량"] < ieven[j]["수량"]:
+#             ieven[i], ieven[j] = ieven[j], ieven[i]
+# print(ieven)
+
+#------------------------------------------------------------------
+# for i in range(0, 5):
+#     for j in range(0, i+1):
+#         print('*', end='')
+#     print('')
+
+# for i in range(0, 5):
+#     star = ""
+#     for j in range(0, 5-i):
+#         star += "*"
+#     print(star)
+

@@ -1,11 +1,10 @@
 import numpy as np
-from pandas import DataFrame, MultiIndex, concat
+from pandas import DataFrame, MultiIndex, concat, DatetimeIndex
 from math import sqrt
 from scipy.stats import t, pearsonr, spearmanr
 from sklearn.impute import SimpleImputer
 from scipy.stats import shapiro, normaltest, ks_2samp, bartlett, fligner, levene, chi2_contingency
 from statsmodels.formula.api import ols
-import re
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 from sklearn.preprocessing import StandardScaler
 from pca import pca
@@ -14,6 +13,7 @@ from sklearn.metrics import confusion_matrix, roc_curve, roc_auc_score, accuracy
 
 from matplotlib import pyplot as plt
 import seaborn as sb
+import sys
 
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 from statsmodels.tsa.stattools import adfuller
@@ -21,7 +21,10 @@ from statsmodels.tsa.seasonal import seasonal_decompose
 from tabulate import tabulate
 
 
-def getIq(field):
+def prettyPrint(df, headers="keys", tablefmt="psql", numalign="right"):
+    print(tabulate(df, headers=headers, tablefmt=tablefmt, numalign=numalign))
+
+def getIq(field, isPrint=True):
     """
     IQR(Interquartile Range)를 이용한 이상치 경계값 계산
 
@@ -38,8 +41,16 @@ def getIq(field):
     iqr = q3 - q1
     하한 = q1 - 1.5 * iqr
     상한 = q3 + 1.5 * iqr
-    결측치경계 = [하한, 상한]
-    return 결측치경계
+    극단치경계 = [하한, 상한]
+
+    df = DataFrame({
+        "극단치 경계": [하한, 상한]
+    }, index=['하한', '상한'])
+
+    if isPrint:
+        prettyPrint(df)
+    else:
+        return 극단치경계
 
 def replaceOutlier(df, fieldName):
     """
@@ -156,7 +167,7 @@ def clearStopwords(nouns, stopwords_file_path="wordcloud/stopwords-ko.txt"):
 
     return data_set
 
-def get_confidence_interval(data, clevel=0.95):
+def getConfidenceInterval(data, clevel=0.95, isPrint=True):
     """
     신뢰구간 계산
 
@@ -180,9 +191,16 @@ def get_confidence_interval(data, clevel=0.95):
     cmin, cmax = t.interval(
         clevel, dof, loc=sample_mean, scale=sample_std_error)
 
-    return (cmin, cmax)
+    if isPrint:
+        df = DataFrame({
+            "신뢰구간": [cmin, cmax]
+        }, index=['하한', '상한'])
 
-def normality_test(*any):
+        prettyPrint(df)
+    else:
+        return (cmin, cmax)
+
+def normalityTest(*any, isPrint=True):
     """
     분산분석을 수행하기 위한 정규성을 검정 한다.
 
@@ -197,23 +215,29 @@ def normality_test(*any):
     names = []
 
     result = {
+        'field': [],
+        'test': [],
         'statistic': [],
         'p-value': [],
         'result': []
     }
     for i in any:
         s, p = shapiro(i)
+        result['field'].append(i.name)
+        result['test'].append('shapiro')
         result['statistic'].append(s)
         result['p-value'].append(p)
         result['result'].append(p > 0.05)
-        names.append(('정규성', 'shapiro', i.name))
+        names.append('정규성')
 
     for i in any:
         s, p = normaltest(i)
+        result['field'].append(i.name)
+        result['test'].append('shapiro')
         result['statistic'].append(s)
         result['p-value'].append(p)
         result['result'].append(p > 0.05)
-        names.append(('정규성', 'normaltest', i.name))
+        names.append('정규성')
 
     n = len(any)
 
@@ -221,14 +245,21 @@ def normality_test(*any):
         j = i + 1 if i < n - 1 else 0
 
         s, p = ks_2samp(any[i], any[j])
+        result['field'].append(f'{any[i].name} vs {any[j].name}')
+        result['test'].append('ks_2samp')
         result['statistic'].append(s)
         result['p-value'].append(p)
         result['result'].append(p > 0.05)
-        names.append(('정규성', 'ks_2samp', f'{any[i].name} vs {any[j].name}'))
+        names.append('정규성')
 
-    return DataFrame(result, index=MultiIndex.from_tuples(names, names=['condition', 'test', 'field']))
+    rdf = DataFrame(result, index=names)
 
-def equal_variance_test(*any):
+    if isPrint:
+        prettyPrint(rdf)
+    else:
+        return rdf
+
+def equalVarianceTest(*any, isPrint=True):
     """
     분산분석을 수행하기 위한 등분산성을 검정 한다.
 
@@ -251,18 +282,22 @@ def equal_variance_test(*any):
 
     fix = " vs "
     name = fix.join(names)
-    index = [['등분산성', 'Bartlett', name], [
-        '등분산성', 'Fligner', name], ['등분산성', 'Levene', name]]
+    index = ['등분산성', '등분산성', '등분산성']
 
     df = DataFrame({
+        'field': [name, name, name],
+        'test': ['Bartlett', 'Fligner', 'Levene'],
         'statistic': [s1, s2, s3],
         'p-value': [p1, p2, p3],
         'result': [p1 > 0.05, p2 > 0.05, p3 > 0.05]
-    }, index=MultiIndex.from_tuples(index, names=['condition', 'test', 'field']))
+    }, index=index)
 
-    return df
+    if isPrint:
+        prettyPrint(df)
+    else:
+        return df
 
-def independence_test(*any):
+def independenceTest(*any, isPrint=True):
     """
     분산분석을 수행하기 위한 독립성을 검정한다.
 
@@ -285,17 +320,22 @@ def independence_test(*any):
     fix = " vs "
     name = fix.join(names)
 
-    index = [['독립성', 'Chi2', name]]
+    index = ['독립성']
 
     df = DataFrame({
+        'field': [name],
+        'test': ['Chi2'],
         'statistic': [result.statistic],
         'p-value': [result.pvalue],
         'result': [result.pvalue > 0.05]
-    }, index=MultiIndex.from_tuples(index, names=['condition', 'test', 'field']))
+    }, index=index)
 
-    return df
+    if isPrint:
+        prettyPrint(df)
+    else:
+        return df
 
-def all_test(*any):
+def allTest(*any, isPrint=True):
     """
     정규성, 등분산성, 독립성을 모두 검정한다.
 
@@ -307,9 +347,14 @@ def all_test(*any):
     -------
     - df: 검정 결과 데이터 프레임
     """
-    return concat([normality_test(*any), equal_variance_test(*any), independence_test(*any)])
+    cc = concat([normalityTest(*any), equalVarianceTest(*any), independenceTest(*any)])
 
-def pearson_r(df):
+    if isPrint:
+        prettyPrint(cc)
+    else:
+        return cc
+
+def pearson_r(df, isPrint=True):
     """
     피어슨 상관계수를 사용하여 상관분석을 수행한다.
 
@@ -341,9 +386,12 @@ def pearson_r(df):
     rdf = DataFrame(data)
     rdf.set_index('fields', inplace=True)
 
-    return rdf
+    if isPrint:
+        prettyPrint(rdf)
+    else:
+        return rdf
 
-def spearman_r(df):
+def spearman_r(df, isPrint=True):
     """
     스피어만 상관계수를 사용하여 상관분석을 수행한다.
 
@@ -375,9 +423,99 @@ def spearman_r(df):
     rdf = DataFrame(data)
     rdf.set_index('fields', inplace=True)
 
-    return rdf
+    if isPrint:
+        prettyPrint(rdf)
+    else:
+        return rdf
 
-def ext_ols(data, y, x):
+class OlsResult:
+    def __init__(self):
+        self._model = None
+        self._fit = None
+        self._summary = None
+        self._table = None
+        self._result = None
+        self._goodness = None
+        self._varstr = None
+
+    @property
+    def model(self):
+        """
+        분석모델
+        """
+        return self._model
+
+    @model.setter
+    def model(self, value):
+        self._model = value
+
+    @property
+    def fit(self):
+        """
+        분석결과 객체
+        """
+        return self._fit
+
+    @fit.setter
+    def fit(self, value):
+        self._fit = value
+
+    @property
+    def summary(self):
+        """
+        분석결과 요약 보고
+        """
+        return self._summary
+
+    @summary.setter
+    def summary(self, value):
+        self._summary = value
+
+    @property
+    def table(self):
+        """
+        결과표
+        """
+        return self._table
+
+    @table.setter
+    def table(self, value):
+        self._table = value
+
+    @property
+    def result(self):
+        """
+        결과표 부가 설명
+        """
+        return self._result
+
+    @result.setter
+    def result(self, value):
+        self._result = value
+
+    @property
+    def goodness(self):
+        """
+        모형 적합도 보고
+        """
+        return self._goodness
+
+    @goodness.setter
+    def goodness(self, value):
+        self._goodness = value
+
+    @property
+    def varstr(self):
+        """
+        독립변수 보고
+        """
+        return self._varstr
+
+    @varstr.setter
+    def varstr(self, value):
+        self._varstr = value
+
+def myOls(data, y, x):
     """
     회귀분석을 수행한다.
 
@@ -495,101 +633,6 @@ def ext_ols(data, y, x):
 
         varstr.append(k)
 
-    # 리턴할
-    return (model, fit, summary, table, result, goodness, varstr)
-
-
-class OlsResult:
-    def __init__(self):
-        self._model = None
-        self._fit = None
-        self._summary = None
-        self._table = None
-        self._result = None
-        self._goodness = None
-        self._varstr = None
-
-    @property
-    def model(self):
-        """
-        분석모델
-        """
-        return self._model
-
-    @model.setter
-    def model(self, value):
-        self._model = value
-
-    @property
-    def fit(self):
-        """
-        분석결과 객체
-        """
-        return self._fit
-
-    @fit.setter
-    def fit(self, value):
-        self._fit = value
-
-    @property
-    def summary(self):
-        """
-        분석결과 요약 보고
-        """
-        return self._summary
-
-    @summary.setter
-    def summary(self, value):
-        self._summary = value
-
-    @property
-    def table(self):
-        """
-        결과표
-        """
-        return self._table
-
-    @table.setter
-    def table(self, value):
-        self._table = value
-
-    @property
-    def result(self):
-        """
-        결과표 부가 설명
-        """
-        return self._result
-
-    @result.setter
-    def result(self, value):
-        self._result = value
-
-    @property
-    def goodness(self):
-        """
-        모형 적합도 보고
-        """
-        return self._goodness
-
-    @goodness.setter
-    def goodness(self, value):
-        self._goodness = value
-
-    @property
-    def varstr(self):
-        """
-        독립변수 보고
-        """
-        return self._varstr
-
-    @varstr.setter
-    def varstr(self, value):
-        self._varstr = value
-
-
-def my_ols(data, y, x):
-    model, fit, summary, table, result, goodness, varstr = ext_ols(data, y, x)
-
     ols_result = OlsResult()
     ols_result.model = model
     ols_result.fit = fit
@@ -633,7 +676,7 @@ def scalling(df, yname=None):
 
     return result
 
-def get_best_features(x_train_std_df):
+def getBestFeatures(x_train_std_df):
     pca_model = pca()
     fit = pca_model.fit_transform(x_train_std_df)
     topfeat_df = fit['topfeat']
@@ -709,8 +752,7 @@ class LogitResult:
     def odds_rate_df(self, value):
         self._odds_rate_df = value
 
-
-def my_logit(data, y, x, subset=None):
+def myOls(data, y, x, subset=None):
     """
     로지스틱 회귀분석을 수행한다.
 
@@ -794,8 +836,12 @@ def my_logit(data, y, x, subset=None):
     logit_result.odds_rate_df = odds_rate_df
 
     return logit_result
+    
+def expTimeData(data, yname, sd_model="m", max_diff=1):
+    plt.rcParams["font.family"] = 'AppleGothic' if sys.platform == 'darwin' else 'Malgun Gothic'
+    plt.rcParams["font.size"] = 12
+    plt.rcParams["axes.unicode_minus"] = False
 
-def exp_timedata(data, yname, sd_model="m", max_diff=1):
     df = data.copy()
 
     # 데이터 정상성 여부
@@ -804,7 +850,6 @@ def exp_timedata(data, yname, sd_model="m", max_diff=1):
     # 반복 수행 횟수
     count = 0
 
-    
     # 결측치 존재 여부
     na_count = df[yname].isna().sum()
     print("결측치 수: %d" % na_count)
@@ -814,7 +859,6 @@ def exp_timedata(data, yname, sd_model="m", max_diff=1):
     plt.show()
     plt.close()
     
-
     # 시계열 분해
     model_name = 'multiplicative' if sd_model == 'm' else 'additive'
     sd = seasonal_decompose(df[yname], model=model_name)
@@ -827,14 +871,33 @@ def exp_timedata(data, yname, sd_model="m", max_diff=1):
 
     ax1.set_ylabel("Original")
     ax1.grid(True)
+    ax1.title.set_text("Original")
     ax2.grid(True)
+    ax2.title.set_text("Trend")
     ax3.grid(True)
+    ax3.title.set_text("Seasonal")
     ax4.grid(True)
+    ax4.title.set_text("Residual")
 
     plt.show()
 
-    while not stationarity:
+    # ACF, PACF 검정
+    fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(15, 12))
+    fig.subplots_adjust(hspace=0.4)
 
+    sb.lineplot(data=df, x=df.index, y=yname, ax=ax1)
+    ax1.title.set_text("Original")
+
+    plot_acf(df[yname], ax=ax2)
+    ax2.title.set_text("ACF Test")
+        
+    plot_pacf(df[yname], ax=ax3)
+    ax3.title.set_text("PACF Test")
+        
+    plt.show()
+    plt.close()
+
+    while not stationarity:
         if count == 0:
             print("=========== 원본 데이터 ===========")
         else:
@@ -860,23 +923,6 @@ def exp_timedata(data, yname, sd_model="m", max_diff=1):
 
         print(tabulate(ardf, headers=["ADF Test", ""], tablefmt='psql', numalign="right"))
 
-
-        # ACF, PACF 검정
-        fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(15, 12))
-        fig.subplots_adjust(hspace=0.4)
-
-        ax1.title.set_text("Original")
-        sb.lineplot(data=df, x=df.index, y=yname, ax=ax1)
-
-        ax2.title.set_text("ACF Test")
-        plot_acf(df[yname], ax=ax2)
-        
-        ax3.title.set_text("PACF Test")
-        plot_pacf(df[yname], ax=ax3)
-        
-        plt.show()
-        plt.close()
-
         # 차분 수행
         df = df.diff().dropna()
 
@@ -884,3 +930,36 @@ def exp_timedata(data, yname, sd_model="m", max_diff=1):
         count += 1
         if count == max_diff:
             break
+
+def exp_time_data(data, yname, sd_model="m", max_diff=1):
+    expTimeData(data, yname, sd_model, max_diff)
+    
+def set_datetime_index(df, field=None, inplace=False):
+    """
+        데이터 프레임의 인덱스를 datetime 형식으로 변환
+
+        Parameters
+        -------
+        - df: 데이터 프레임
+        - inplace: 원본 데이터 프레임에 적용 여부
+
+        Returns
+        -------
+        - 인덱스가 datetime 형식으로 변환된 데이터 프레임
+    """
+    
+    if inplace:
+        if field is not None:
+            df.set_index(field, inplace=True)
+            
+        df.index = DatetimeIndex(df.index.values, freq=df.index.inferred_freq)
+        df.sort_index(inplace=True)
+    else:
+        cdf = df.copy()
+        
+        if field is not None:
+            cdf.set_index(field, inplace=True)
+            
+        cdf.index = DatetimeIndex(cdf.index.values, freq=cdf.index.inferred_freq)
+        cdf.sort_index(inplace=True)
+        return cdf

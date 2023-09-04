@@ -7,6 +7,7 @@ from tabulate import tabulate
 from matplotlib import pyplot as plt
 
 from pandas import DataFrame, MultiIndex, concat, DatetimeIndex, Series
+
 from scipy import stats
 from scipy.stats import t, pearsonr, spearmanr
 from scipy.stats import shapiro, normaltest, ks_2samp, bartlett, fligner, levene, chi2_contingency
@@ -22,6 +23,11 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler,PolynomialFeatures
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import confusion_matrix, roc_curve, roc_auc_score, accuracy_score, recall_score, precision_score, f1_score, r2_score, mean_absolute_error, mean_squared_error
+
+
+plt.rcParams["font.family"] = 'Malgun Gothic'
+plt.rcParams["font.size"] = 16
+plt.rcParams['axes.unicode_minus'] = False
 
 
 def prettyPrint(df, headers="keys", tablefmt="psql", numalign="right", title="value"):
@@ -518,7 +524,7 @@ class RegMetric:
 class OlsResult:
     def __init__(self):
         self._x_train = None
-        self._y_train = None   
+        self._y_train = None
         self._train_pred = None
         self._x_test = None
         self._y_test = None
@@ -574,6 +580,14 @@ class OlsResult:
     @y_test.setter
     def y_test(self, value):
         self._y_test = value
+
+    @property
+    def test_pred(self):
+        return self._test_pred
+
+    @test_pred.setter
+    def test_pred(self, value):
+        self._test_pred = value
 
     @property
     def model(self):
@@ -1234,9 +1248,9 @@ def regplot(x_left, y_left, y_left_pred=None, left_title=None, x_right=None, y_r
     plt.show()
     plt.close()
     
-def ml_ols(data, xnames, yname, degree=1, test_size=0.25, scalling=False, random_state=777):
+def ml_ols(data, xnames, yname, degree=1, test_size=0.25, use_scalling=False, random_state=777):
     # 표준화 설정이 되어 있다면 표준화 수행
-    if scalling:
+    if use_scalling:
         data = scalling(data)
         
     # 독립변수 이름이 문자열로 전달되었다면 콤마 단위로 잘라서 리스트로 변환
@@ -1271,11 +1285,11 @@ def ml_ols(data, xnames, yname, degree=1, test_size=0.25, scalling=False, random
     result.fit = fit
     result.coef = fit.coef_
     result.intercept = fit.intercept_
-
+    
     result.x_train = x_train.copy()
     result.y_train = y_train.copy()
     result.train_pred = result.fit.predict(result.x_train)
-
+    
     if x_test is not None and y_test is not None:
         result.x_test = x_test.copy()
         result.y_test = y_test.copy()
@@ -1284,8 +1298,26 @@ def ml_ols(data, xnames, yname, degree=1, test_size=0.25, scalling=False, random
     else:
         result.setRegMetric(y_train, result.train_pred)
         
+    # 결과표 함수 호출
+    x_train[yname] = y_train
+    result.table = get_ols_table(x_train, xnames, yname, result.intercept, result.coef, result.train_pred)
+        
+    return result
+
+
+def get_ols_table(data, xnames, yname, intercept, coef, predict):
+    # 독립변수 이름이 문자열로 전달되었다면 콤마 단위로 잘라서 리스트로 변환
+    if type(xnames) == str:
+        xnames = xnames.split(',')
+            
+    # 독립변수 추출
+    x = data.filter(xnames)
+        
+    # 종속변수 추출
+    y = data[yname]
+    
     # 절편과 계수를 하나의 배열로 결합
-    params = np.append(result.intercept, result.coef)    
+    params = np.append(intercept, coef)    
     
     # 상수항 추가하기
     designX = x.copy()
@@ -1301,8 +1333,7 @@ def ml_ols(data, xnames, yname, degree=1, test_size=0.25, scalling=False, random
     dia = inv.diagonal()
     
     # 평균 제곱오차 구하기
-    predictions = result.fit.predict(x)
-    MSE = (sum((y-predictions)**2)) / (len(designX)-len(designX.iloc[0]))
+    MSE = (sum((y-predict)**2)) / (len(designX)-len(designX.iloc[0]))
     
     # 표준오차
     se_b = np.sqrt(MSE * dia)
@@ -1315,25 +1346,60 @@ def ml_ols(data, xnames, yname, degree=1, test_size=0.25, scalling=False, random
     
     # vif
     vif = []
+    
+    # 훈련데이터에 대한 독립변수와 종속변수를 결합한 완전한 데이터프레임 준비
+    data = x.copy()
+    data[yname] = y
+    # print(data)
+    #print("-" * 30)
 
-    # 훈련데이터 대한 독립변수와 종속변수를 결합한 완전한 데이터프레임 준비
-    data = x_train.copy()
-    data[yname] = y_train
-
-    for i, v in enumerate(x_train.columns):
+    for i, v in enumerate(x.columns):
         j = list(data.columns).index(v)
         vif.append(variance_inflation_factor(data, j))
     
     # 결과표 구성하기
-    result.table = DataFrame({
-        "종속변수": [yname] * len(x_train.columns),
-        "독립변수": x_train.columns,
-        "B": result.coef,
+    table = DataFrame({
+        "종속변수": [yname] * len(x.columns),
+        "독립변수": x.columns,
+        "B": coef,
         "표준오차": se_b[1:],
         "β": 0,
         "t": ts_b[1:],
         "유의확률": p_values[1:],
         "VIF": vif,
     })
-        
-    return result
+    
+    return table
+
+
+def tf_result_plot(result, figsize=(15, 5), dpi=150):
+    # 학습 결과에 대한 데이터프레임 생성
+    result_df = DataFrame(result.history)
+    result_df['epochs'] = result_df.index+1
+    result_df.set_index('epochs', inplace=True)
+    
+    # 학습 결과 그래프의 컬럼명
+    column_names = result_df.columns
+    
+    # 학습데이터에 대한 필드이름
+    train_column_name = [column_names[0], column_names[1]]
+    
+    # 검증데이터에 대한 필드이름
+    test_column_name = [column_names[2], column_names[3]]
+    
+    # 학습 결과 그래프
+    fig, ax = plt.subplots(1, 2, figsize=figsize, dpi=dpi)
+    
+    for i, v in enumerate(ax):
+        sb.lineplot(x=result_df.index, y=train_column_name[i], data=result_df, color='blue', label=train_column_name[i], ax=v)
+        sb.lineplot(x=result_df.index, y=test_column_name[i], data=result_df, color='orange', label=test_column_name[i], ax=v)
+        v.set_title(train_column_name[i])
+        v.set_xlabel('ephocs')
+        v.set_ylabel(train_column_name[i])
+        v.grid()
+        v.legend()
+    
+    plt.show()
+    plt.close()
+    
+    return result_df

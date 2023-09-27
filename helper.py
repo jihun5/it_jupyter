@@ -1,7 +1,7 @@
 import sys
 import numpy as np
 import seaborn as sb
-# from pca import pca
+from pca import pca
 from math import sqrt
 from tabulate import tabulate
 from matplotlib import pyplot as plt
